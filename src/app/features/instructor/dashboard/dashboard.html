@@ -1,0 +1,82 @@
+<div class="min-h-screen pt-28 pb-20 bg-slate-50">
+  <div class="container mx-auto px-6">
+    <div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">Instructor Dashboard</h1>
+        <p class="text-slate-500">Manage your courses and track your performance.</p>
+      </div>
+      <button class="btn-primary flex items-center gap-2 self-start">
+        <lucide-icon [name]="Plus" size="18"></lucide-icon>
+        Create New Course
+      </button>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div *ngFor="let stat of stats" class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center ' + stat.bg + ' ' + stat.color">
+            <lucide-icon [name]="stat.icon" size="24"></lucide-icon>
+          </div>
+          <div class="flex items-center gap-1 text-emerald-600 text-xs font-bold bg-emerald-50 px-2 py-1 rounded-lg">
+            <lucide-icon [name]="TrendingUp" size="12"></lucide-icon>
+            +12%
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-slate-900">{{stat.value}}</div>
+        <div class="text-sm text-slate-500">{{stat.label}}</div>
+      </div>
+    </div>
+
+    <!-- Courses Table -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-slate-900">My Courses</h2>
+        <a href="#" class="text-sm font-semibold text-primary-600">View All</a>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <th class="px-6 py-4">Course</th>
+              <th class="px-6 py-4">Status</th>
+              <th class="px-6 py-4">Students</th>
+              <th class="px-6 py-4">Rating</th>
+              <th class="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            <tr *ngFor="let course of myCourses$ | async" class="hover:bg-slate-50/50 transition-colors group">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-16 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                    <img [src]="course.thumbnailUrl" class="w-full h-full object-cover">
+                  </div>
+                  <div class="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-primary-600 cursor-pointer">{{course.title}}</div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">Published</span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-slate-700">{{course.reviewCount / 10 | number:'1.0-0'}}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-1">
+                  <lucide-icon [name]="Star" class="text-amber-400 fill-amber-400" size="14"></lucide-icon>
+                  <span class="text-sm font-medium text-slate-700">{{course.rating}}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <button class="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                  <lucide-icon [name]="MoreVertical" size="20"></lucide-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

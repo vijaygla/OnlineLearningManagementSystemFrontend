@@ -1,0 +1,88 @@
+<div class="min-h-screen pt-28 pb-20 bg-slate-50">
+  <div class="container mx-auto px-6">
+    <div class="mb-10">
+      <h1 class="text-3xl font-bold text-slate-900 mb-2">Admin Panel</h1>
+      <p class="text-slate-500">System overview and course moderation.</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div *ngFor="let stat of stats" class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center mb-4 ' + stat.bg + ' ' + stat.color">
+          <lucide-icon [name]="stat.icon" size="24"></lucide-icon>
+        </div>
+        <div class="text-2xl font-bold text-slate-900">{{stat.value}}</div>
+        <div class="text-sm text-slate-500">{{stat.label}}</div>
+      </div>
+    </div>
+
+    <!-- Moderation Queue -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden mb-10">
+      <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <h2 class="text-xl font-bold text-slate-900">Moderation Queue</h2>
+          <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">12 PENDING</span>
+        </div>
+        <button class="text-sm font-semibold text-primary-600">View Queue</button>
+      </div>
+      
+      <div class="divide-y divide-slate-50">
+        <div *ngFor="let course of pendingCourses$ | async" class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-50 transition-colors">
+          <div class="flex items-center gap-6">
+            <div class="w-20 h-12 rounded-lg overflow-hidden flex-shrink-0">
+              <img [src]="course.thumbnailUrl" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <div class="font-bold text-slate-800 mb-1">{{course.title}}</div>
+              <div class="flex items-center gap-3 text-xs text-slate-400">
+                <span class="font-bold text-slate-600">Instructor: {{course.instructorName}}</span>
+                <span>•</span>
+                <span>Submitted {{course.submittedDate}}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <button class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition-colors">Preview</button>
+            <button class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors">
+              <lucide-icon [name]="X" size="20"></lucide-icon>
+            </button>
+            <button class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-colors">
+              <lucide-icon [name]="Check" size="20"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid md:grid-cols-2 gap-10">
+      <div class="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-900 mb-6">User Management</h3>
+        <div class="relative mb-6">
+          <input type="text" placeholder="Search users by name or email..." class="w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-sm">
+          <lucide-icon [name]="Search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size="18"></lucide-icon>
+        </div>
+        <button class="w-full py-3 rounded-2xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors">Manage All Users</button>
+      </div>
+
+      <div class="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-900 mb-6">System Settings</h3>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50">
+            <div class="text-sm font-bold text-slate-700">Course Auto-Approval</div>
+            <div class="w-12 h-6 bg-slate-200 rounded-full relative">
+              <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50">
+            <div class="text-sm font-bold text-slate-700">New Instructor Registration</div>
+            <div class="w-12 h-6 bg-emerald-500 rounded-full relative">
+              <div class="absolute top-1 right-1 w-4 h-4 bg-white rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

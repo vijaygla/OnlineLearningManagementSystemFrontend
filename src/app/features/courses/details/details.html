@@ -1,0 +1,137 @@
+<div class="min-h-screen pt-28 pb-20 bg-white" *ngIf="course$ | async as course; else loader">
+  <div class="container mx-auto px-6">
+    <div class="flex flex-col lg:flex-row gap-12">
+      <!-- Main Content -->
+      <div class="flex-1">
+        <nav class="flex items-center gap-2 text-sm text-slate-500 mb-6">
+          <a routerLink="/courses" class="hover:text-primary-600 transition-colors">Courses</a>
+          <span>/</span>
+          <span class="text-slate-900 font-medium">{{course.category}}</span>
+        </nav>
+
+        <h1 class="text-4xl lg:text-5xl font-bold text-slate-900 mb-6 leading-tight">{{course.title}}</h1>
+        <p class="text-xl text-slate-600 mb-8 leading-relaxed">{{course.description}}</p>
+
+        <div class="flex flex-wrap items-center gap-6 mb-10">
+          <div class="flex items-center gap-2">
+            <lucide-icon [name]="Star" class="text-amber-400 fill-amber-400" size="20"></lucide-icon>
+            <span class="font-bold text-slate-900">{{course.rating}}</span>
+            <span class="text-slate-500">({{course.reviewCount | number}} reviews)</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-600">
+            <lucide-icon [name]="User" size="20"></lucide-icon>
+            <span>Taught by <span class="font-semibold text-slate-900">{{course.instructorName}}</span></span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-600">
+            <lucide-icon [name]="Globe" size="20"></lucide-icon>
+            <span>English</span>
+          </div>
+        </div>
+
+        <!-- Learning Outcomes -->
+        <div class="p-8 rounded-3xl bg-slate-50 border border-slate-100 mb-12">
+          <h2 class="text-2xl font-bold mb-6">What you'll learn</h2>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div *ngFor="let outcome of learningOutcomes" class="flex items-start gap-3">
+              <lucide-icon [name]="CheckCircle2" class="text-emerald-500 mt-1" size="18"></lucide-icon>
+              <span class="text-slate-700">{{outcome}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Syllabus -->
+        <div class="mb-12">
+          <h2 class="text-2xl font-bold mb-6">Course Content</h2>
+          <div class="space-y-4">
+            <div *ngFor="let section of syllabus" class="border border-slate-200 rounded-2xl overflow-hidden">
+              <div class="flex items-center justify-between p-5 bg-slate-50/50 cursor-pointer hover:bg-slate-50 transition-colors">
+                <div class="flex items-center gap-4">
+                  <lucide-icon [name]="Play" size="18" class="text-slate-400"></lucide-icon>
+                  <span class="font-bold text-slate-800">{{section.title}}</span>
+                </div>
+                <div class="text-sm text-slate-500">
+                  {{section.lessons}} lessons • {{section.duration}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="mb-12">
+          <h2 class="text-2xl font-bold mb-6">Student Reviews</h2>
+          <div class="space-y-8">
+            <div *ngFor="let review of reviews$ | async" class="border-b border-slate-100 pb-8 last:border-0">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">
+                  {{review.studentName.charAt(0)}}
+                </div>
+                <div>
+                  <h4 class="font-bold text-slate-900">{{review.studentName}}</h4>
+                  <div class="flex items-center gap-2">
+                    <div class="flex items-center">
+                      <lucide-icon *ngFor="let i of [1,2,3,4,5]" [name]="Star" 
+                                  [class]="i <= review.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-200'" 
+                                  size="14"></lucide-icon>
+                    </div>
+                    <span class="text-xs text-slate-400">{{review.createdAt | date}}</span>
+                  </div>
+                </div>
+              </div>
+              <p class="text-slate-600 leading-relaxed">{{review.comment}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Card -->
+      <div class="lg:w-[400px]">
+        <div class="sticky top-32 p-8 rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
+          <div class="aspect-video rounded-2xl overflow-hidden mb-6 relative group cursor-pointer">
+            <img [src]="course.thumbnailUrl" [alt]="course.title" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white">
+                <lucide-icon [name]="Play" size="32" class="fill-white ml-1"></lucide-icon>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 mb-6">
+            <span class="text-4xl font-bold text-slate-900">${{course.price}}</span>
+            <span class="text-xl text-slate-400 line-through">$199.99</span>
+            <span class="px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 text-xs font-bold">50% OFF</span>
+          </div>
+
+          <button [routerLink]="['/checkout', course.id]" class="btn-primary w-full py-4 text-lg mb-4">Enroll Now</button>
+          <p class="text-center text-sm text-slate-500 mb-8">30-Day Money-Back Guarantee</p>
+
+          <div class="space-y-4">
+            <h4 class="font-bold text-slate-900">This course includes:</h4>
+            <div class="flex items-center gap-3 text-sm text-slate-600">
+              <lucide-icon [name]="Clock" size="18" class="text-primary-600"></lucide-icon>
+              <span>{{course.duration}} on-demand video</span>
+            </div>
+            <div class="flex items-center gap-3 text-sm text-slate-600">
+              <lucide-icon [name]="BookOpen" size="18" class="text-primary-600"></lucide-icon>
+              <span>{{course.lessonCount}} downloadable resources</span>
+            </div>
+            <div class="flex items-center gap-3 text-sm text-slate-600">
+              <lucide-icon [name]="Calendar" size="18" class="text-primary-600"></lucide-icon>
+              <span>Full lifetime access</span>
+            </div>
+            <div class="flex items-center gap-3 text-sm text-slate-600">
+              <lucide-icon [name]="Award" size="18" class="text-primary-600"></lucide-icon>
+              <span>Certificate of completion</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loader>
+  <div class="min-h-screen flex items-center justify-center">
+    <lucide-icon name="Loader2" class="animate-spin text-primary-600" size="48"></lucide-icon>
+  </div>
+</ng-template>
