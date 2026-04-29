@@ -1,13 +1,17 @@
 export interface User {
-  id: string;
+  id?: string;
   name: string;
   email: string;
-  role: 'Student' | 'Instructor' | 'Admin';
+  role: string;
+  profilePictureUrl?: string;
 }
 
 export interface AuthResponse {
+  name: string;
   email: string;
   token: string;
+  role: string;
+  profilePictureUrl?: string;
 }
 
 export interface RegisterRequest {
@@ -20,4 +24,8 @@ export interface RegisterRequest {
 export interface LoginRequest {
   email: string;
   password?: string;
+}
+
+export interface GoogleLoginRequest {
+  idToken: string;
 }

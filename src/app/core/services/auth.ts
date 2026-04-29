@@ -14,18 +14,17 @@ export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
 
   currentUser = signal<User | null>(null);
-  token = signal<string | null>(typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+  token = signal<string | null>(null);
 
   constructor() {
-    if (typeof window !== 'undefined' && this.token()) {
-      // Decode token or fetch user info if needed
-      // For the prototype, we'll set a mock student user
-      this.currentUser.set({
-        id: '1',
-        name: 'John Student',
-        email: 'student@example.com',
-        role: 'Student'
-      });
+    if (typeof window !== 'undefined') {
+      const savedToken = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      
+      if (savedToken && savedUser) {
+        this.token.set(savedToken);
+        this.currentUser.set(JSON.parse(savedUser));
+      }
     }
   }
 
@@ -41,17 +40,32 @@ export class AuthService {
     );
   }
 
+  googleLogin(idToken: string) {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/google-login`, { idToken }).pipe(
+      tap(res => this.handleAuth(res))
+    );
+  }
+
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     this.token.set(null);
     this.currentUser.set(null);
     this.router.navigate(['/auth/login']);
   }
 
   private handleAuth(res: AuthResponse) {
+    const user: User = {
+      name: res.name,
+      email: res.email,
+      role: res.role,
+      profilePictureUrl: res.profilePictureUrl
+    };
+
     localStorage.setItem('token', res.token);
+    localStorage.setItem('user', JSON.stringify(user));
+    
     this.token.set(res.token);
-    // Ideally decode JWT to set currentUser
-    // this.currentUser.set(decodedUser);
+    this.currentUser.set(user);
   }
 }

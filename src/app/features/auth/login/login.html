@@ -18,10 +18,10 @@
               type="email" 
               formControlName="email"
               placeholder="name@company.com"
-              class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none"
+              class="w-full pl-14 pr-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none"
               [class.border-red-300]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
             >
-            <lucide-icon [name]="Mail" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size="18"></lucide-icon>
+            <lucide-icon [name]="Mail" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size="18"></lucide-icon>
           </div>
           <p *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid" class="mt-2 text-xs text-red-500">Please enter a valid email address.</p>
         </div>
@@ -36,10 +36,10 @@
               type="password" 
               formControlName="password"
               placeholder="••••••••"
-              class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none"
+              class="w-full pl-14 pr-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none"
               [class.border-red-300]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
             >
-            <lucide-icon [name]="Lock" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size="18"></lucide-icon>
+            <lucide-icon [name]="Lock" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size="18"></lucide-icon>
           </div>
         </div>
 
@@ -52,6 +52,17 @@
           <span *ngIf="!isLoading">Log In</span>
           <lucide-icon *ngIf="!isLoading" [name]="ArrowRight" class="group-hover:translate-x-1 transition-transform" size="18"></lucide-icon>
         </button>
+
+        <div class="relative py-4">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-slate-100"></div>
+          </div>
+          <div class="relative flex justify-center text-xs uppercase">
+            <span class="bg-white px-2 text-slate-400">Or continue with</span>
+          </div>
+        </div>
+
+        <div id="google-btn"></div>
       </form>
 
       <div class="mt-10 pt-8 border-t border-slate-100 text-center">

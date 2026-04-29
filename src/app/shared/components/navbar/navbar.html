@@ -24,24 +24,56 @@
       <!-- Actions -->
       <div class="hidden md:flex items-center gap-4">
         <div class="relative">
-          <input type="text" placeholder="Search courses..." class="pl-10 pr-4 py-2 rounded-full bg-slate-100 border-transparent focus:bg-white focus:border-primary-300 focus:ring-4 focus:ring-primary-500/10 transition-all w-64 text-sm">
+          <input type="text" placeholder="Search courses..." class="pl-11 pr-4 py-2 rounded-full bg-slate-100 border-transparent focus:bg-white focus:border-primary-300 focus:ring-4 focus:ring-primary-500/10 transition-all w-64 text-sm">
           <lucide-icon [name]="Search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size="16"></lucide-icon>
         </div>
 
-        <ng-container *ngIf="!authService.token(); else userProfile">
+        <ng-container *ngIf="!authService.currentUser(); else userProfile">
           <button routerLink="/auth/login" class="px-5 py-2 font-semibold text-slate-600 hover:text-primary-600 transition-colors">Log in</button>
           <button routerLink="/auth/register" class="btn-primary py-2 px-5 text-sm">Sign up</button>
         </ng-container>
 
         <ng-template #userProfile>
-          <button class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-primary-50 transition-colors">
-            <lucide-icon [name]="Bell" size="20"></lucide-icon>
-          </button>
-          <button class="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border border-slate-200 hover:border-primary-300 transition-all">
-            <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center">
-              <lucide-icon [name]="User" size="18"></lucide-icon>
+          <div class="flex items-center gap-3">
+            <button class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-primary-50 transition-colors">
+              <lucide-icon [name]="Bell" size="20"></lucide-icon>
+            </button>
+            
+            <div class="relative">
+              <button (click)="toggleProfile()" class="flex items-center gap-2 pl-2 pr-2 py-1 rounded-full border border-slate-200 hover:border-primary-300 transition-all bg-white">
+                @if (authService.currentUser()?.profilePictureUrl && !imageError()) {
+                  <img [src]="authService.currentUser()?.profilePictureUrl" 
+                       (error)="handleImageError()"
+                       class="w-8 h-8 rounded-full object-cover">
+                } @else {
+                  <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold">
+                    {{ getInitials(authService.currentUser()?.name) }}
+                  </div>
+                }
+                <lucide-icon [name]="ChevronDown" size="14" class="text-slate-400"></lucide-icon>
+              </button>
+
+              <!-- Profile Dropdown -->
+              @if (isProfileOpen()) {
+                <div class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 animate-in fade-in zoom-in duration-200">
+                  <div class="px-4 py-3 border-b border-slate-50 mb-2">
+                    <p class="text-sm font-bold text-slate-800">{{ authService.currentUser()?.name }}</p>
+                    <p class="text-xs text-slate-500 truncate">{{ authService.currentUser()?.email }}</p>
+                  </div>
+                  
+                  <button routerLink="/profile" (click)="isProfileOpen.set(false)" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+                    <lucide-icon [name]="User" size="18"></lucide-icon>
+                    Profile
+                  </button>
+                  
+                  <button (click)="logout()" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                    <lucide-icon [name]="LogOut" size="18"></lucide-icon>
+                    Sign out
+                  </button>
+                </div>
+              }
             </div>
-          </button>
+          </div>
         </ng-template>
       </div>
 
