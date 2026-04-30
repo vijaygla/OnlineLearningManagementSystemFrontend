@@ -2,12 +2,15 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LucideAngularModule, ChevronLeft, ChevronRight, Play, CheckCircle2, MessageSquare, FileText, HelpCircle, Trophy, Loader2, Send, User } from 'lucide-angular';
 import { CourseService } from '../../../core/services/course';
+import { ContentService } from '../../../core/services/content';
 import { AssessmentService } from '../../../core/services/assessment';
 import { DiscussionService } from '../../../core/services/discussion';
-import { map, switchMap, shareReplay } from 'rxjs';
+import { map, switchMap, shareReplay, tap } from 'rxjs';
 import { QuizResult } from '../../../core/models/assessment.models';
+import { Section } from '../../../core/models/content.models';
 
 @Component({
   selector: 'app-learning-player',
@@ -18,8 +21,10 @@ import { QuizResult } from '../../../core/models/assessment.models';
 export class LearningPlayerComponent {
   private route = inject(ActivatedRoute);
   private courseService = inject(CourseService);
+  private contentService = inject(ContentService);
   private assessmentService = inject(AssessmentService);
   private discussionService = inject(DiscussionService);
+  private sanitizer = inject(DomSanitizer);
 
   readonly ChevronLeft = ChevronLeft;
   readonly ChevronRight = ChevronRight;
@@ -39,6 +44,19 @@ export class LearningPlayerComponent {
     shareReplay(1)
   );
 
+  sections$ = this.route.params.pipe(
+    map(params => params['courseId']),
+    switchMap(id => this.contentService.getSectionsByCourseId(id)),
+    tap(sections => {
+      this.currentSections = sections;
+      if (sections.length > 0 && sections[0].lessons.length > 0) {
+        this.activeModuleIndex = 0;
+        this.activeLessonIndex = 0;
+      }
+    }),
+    shareReplay(1)
+  );
+
   quiz$ = this.route.params.pipe(
     map(params => params['courseId']),
     switchMap(id => this.assessmentService.getQuizByCourseId(id))
@@ -52,6 +70,7 @@ export class LearningPlayerComponent {
   activeTab: 'overview' | 'resources' | 'quiz' | 'discussion' = 'overview';
   activeModuleIndex = 0;
   activeLessonIndex = 0;
+  currentSections: Section[] = [];
 
   // Quiz state
   selectedAnswers: number[] = [];
@@ -63,39 +82,59 @@ export class LearningPlayerComponent {
   newThreadContent = '';
   isCreatingThread = false;
 
-  modules = [
-    {
-      title: 'Introduction',
-      lessons: [
-        { title: 'Welcome to the course', duration: '05:20', completed: true },
-        { title: 'How to get help', duration: '03:45', completed: true },
-        { title: 'Course Roadmap', duration: '10:15', completed: false }
-      ]
-    },
-    {
-      title: 'Environment Setup',
-      lessons: [
-        { title: 'Installing tools', duration: '15:20', completed: false },
-        { title: 'Configuration basics', duration: '08:45', completed: false }
-      ]
-    },
-    {
-      title: 'Core Concepts',
-      lessons: [
-        { title: 'Variables and Data Types', duration: '25:10', completed: false },
-        { title: 'Functions and Scope', duration: '35:20', completed: false },
-        { title: 'Asynchronous Programming', duration: '45:00', completed: false }
-      ]
-    }
-  ];
-
   get currentLesson() {
-    return this.modules[this.activeModuleIndex].lessons[this.activeLessonIndex];
+    if (this.currentSections.length > 0 && 
+        this.currentSections[this.activeModuleIndex] && 
+        this.currentSections[this.activeModuleIndex].lessons[this.activeLessonIndex]) {
+      return this.currentSections[this.activeModuleIndex].lessons[this.activeLessonIndex];
+    }
+    return null;
+  }
+
+  getSafeUrl(url: string | undefined): SafeResourceUrl | null {
+    if (!url) return null;
+    let finalUrl = url;
+    
+    // Transform YouTube URLs for embedding
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1].split('&')[0];
+      finalUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1].split('?')[0];
+      finalUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
+    
+    return this.sanitizer.bypassSecurityTrustResourceUrl(finalUrl);
   }
 
   selectLesson(modIdx: number, lesIdx: number) {
     this.activeModuleIndex = modIdx;
     this.activeLessonIndex = lesIdx;
+    this.activeTab = 'overview';
+  }
+
+  nextLesson() {
+    if (!this.currentSections.length) return;
+    
+    const currentModule = this.currentSections[this.activeModuleIndex];
+    if (this.activeLessonIndex < currentModule.lessons.length - 1) {
+      this.activeLessonIndex++;
+    } else if (this.activeModuleIndex < this.currentSections.length - 1) {
+      this.activeModuleIndex++;
+      this.activeLessonIndex = 0;
+    }
+    this.activeTab = 'overview';
+  }
+
+  previousLesson() {
+    if (!this.currentSections.length) return;
+
+    if (this.activeLessonIndex > 0) {
+      this.activeLessonIndex--;
+    } else if (this.activeModuleIndex > 0) {
+      this.activeModuleIndex--;
+      this.activeLessonIndex = this.currentSections[this.activeModuleIndex].lessons.length - 1;
+    }
     this.activeTab = 'overview';
   }
 

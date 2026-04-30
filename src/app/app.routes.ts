@@ -8,6 +8,7 @@ import { StudentDashboardComponent } from './features/student/dashboard/dashboar
 import { LearningPlayerComponent } from './features/learn/player/player';
 import { CheckoutComponent } from './features/checkout/checkout';
 import { InstructorDashboardComponent } from './features/instructor/dashboard/dashboard';
+import { CourseBuilderComponent } from './features/instructor/builder/builder';
 import { AdminDashboardComponent } from './features/admin/dashboard/dashboard';
 
 export const routes: Routes = [
@@ -20,6 +21,8 @@ export const routes: Routes = [
   { path: 'learn/:courseId', component: LearningPlayerComponent },
   { path: 'checkout/:courseId', component: CheckoutComponent },
   { path: 'instructor/dashboard', component: InstructorDashboardComponent },
+  { path: 'instructor/builder', component: CourseBuilderComponent },
+  { path: 'instructor/builder/:id', component: CourseBuilderComponent },
   { path: 'admin/dashboard', component: AdminDashboardComponent },
   { path: '**', redirectTo: '' }
 ];

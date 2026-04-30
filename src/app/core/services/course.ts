@@ -33,6 +33,20 @@ export class CourseService {
     );
   }
 
+  createCourse(course: { title: string, description: string, categoryId: string, price: number }): Observable<Course> {
+    return this.http.post<any>(this.apiUrl, course).pipe(
+      map(c => this.mapToCourse(c))
+    );
+  }
+
+  updateCourse(id: string, course: { title: string, description: string, price: number }): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, course);
+  }
+
+  deleteCourse(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
   private mapToCourse(apiCourse: any): Course {
     // Basic mapping from backend fields
     // We use placeholders for fields not currently returned by the Course entity

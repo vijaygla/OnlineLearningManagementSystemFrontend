@@ -25,9 +25,14 @@
             [(ngModel)]="searchQuery"
             (ngModelChange)="onSearchChange()"
             placeholder="Search by title, instructor..." 
-            class="w-full pl-12 pr-4 py-3 rounded-2xl bg-white border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-sm"
+            class="w-full pl-12 pr-12 py-3 rounded-2xl bg-white border border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-sm font-bold text-slate-900"
           >
           <lucide-icon [name]="Search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size="18"></lucide-icon>
+          
+          <!-- Real-time Search Loading Indicator -->
+          <div *ngIf="isSearching" class="absolute right-4 top-1/2 -translate-y-1/2">
+            <lucide-icon [name]="Loader2" class="animate-spin text-primary-500" size="16"></lucide-icon>
+          </div>
         </div>
         
         <button class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors text-sm">
@@ -73,13 +78,13 @@
     <div class="mt-20 flex justify-center" *ngIf="(filteredCourses$ | async)?.length">
       <div class="flex items-center gap-2">
         <button class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 cursor-not-allowed">
-          <lucide-icon name="ChevronLeft" size="18"></lucide-icon>
+          <lucide-icon [name]="ChevronLeft" size="18"></lucide-icon>
         </button>
         <button class="w-10 h-10 rounded-xl bg-primary-600 text-white font-bold shadow-lg shadow-primary-500/30">1</button>
         <button class="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50">2</button>
         <button class="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50">3</button>
         <button class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">
-          <lucide-icon name="ChevronRight" size="18"></lucide-icon>
+          <lucide-icon [name]="ChevronRight" size="18"></lucide-icon>
         </button>
       </div>
     </div>

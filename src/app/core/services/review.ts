@@ -1,45 +1,44 @@
-import { Injectable } from '@angular/core';
-import { of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { Review, CreateReviewDto } from '../models/review.models';
+import { catchError, Observable, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReviewService {
-  private mockReviews: Review[] = [
-    {
-      id: '1',
-      studentId: 'u1',
-      studentName: 'John Doe',
-      courseId: '1',
-      rating: 5,
-      comment: 'Excellent course! Everything was explained very clearly.',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: '2',
-      studentId: 'u2',
-      studentName: 'Jane Smith',
-      courseId: '1',
-      rating: 4,
-      comment: 'Good content, but some sections were a bit fast.',
-      createdAt: new Date().toISOString()
-    }
-  ];
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/reviews`;
 
-  getReviewsByCourseId(courseId: string) {
-    return of(this.mockReviews.filter(r => r.courseId === courseId)).pipe(delay(500));
+  getReviewsByCourseId(courseId: string): Observable<Review[]> {
+    return this.http.get<Review[]>(`${this.apiUrl}/course/${courseId}`).pipe(
+      catchError(err => {
+        console.error(`Error fetching reviews for course ${courseId}:`, err);
+        return of([]);
+      })
+    );
   }
 
-  addReview(review: CreateReviewDto) {
-    const newReview: Review = {
-      id: Math.random().toString(36).substr(2, 9),
-      studentId: 'current-user',
-      studentName: 'Current User',
-      ...review,
-      createdAt: new Date().toISOString()
-    };
-    this.mockReviews.unshift(newReview);
-    return of(newReview).pipe(delay(500));
+  getCourseRating(courseId: string): Observable<{ averageRating: number, reviewCount: number }> {
+    return this.http.get<{ averageRating: number, reviewCount: number }>(`${this.apiUrl}/course/${courseId}/rating`).pipe(
+      catchError(err => {
+        console.error(`Error fetching rating for course ${courseId}:`, err);
+        return of({ averageRating: 0, reviewCount: 0 });
+      })
+    );
+  }
+
+  addReview(review: CreateReviewDto): Observable<Review | null> {
+    return this.http.post<Review>(this.apiUrl, review).pipe(
+      catchError(err => {
+        console.error('Error adding review:', err);
+        return of(null);
+      })
+    );
+  }
+
+  deleteReview(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

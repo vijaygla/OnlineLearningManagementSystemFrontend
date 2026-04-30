@@ -4,7 +4,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, CreditCard, Lock, ShieldCheck, ArrowRight, Loader2 } from 'lucide-angular';
 import { CourseService } from '../../core/services/course';
-import { map, switchMap } from 'rxjs';
+import { EnrollmentService } from '../../core/services/enrollment';
+import { ToastService } from '../../core/services/toast';
+import { map, switchMap, take } from 'rxjs';
 
 @Component({
   selector: 'app-checkout',
@@ -16,6 +18,8 @@ export class CheckoutComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private courseService = inject(CourseService);
+  private enrollmentService = inject(EnrollmentService);
+  private toastService = inject(ToastService);
   private fb = inject(FormBuilder);
 
   readonly CreditCard = CreditCard;
@@ -41,11 +45,27 @@ export class CheckoutComponent {
   onSubmit() {
     if (this.checkoutForm.valid) {
       this.isLoading = true;
-      // Mock payment delay
-      setTimeout(() => {
-        this.isLoading = false;
-        this.router.navigate(['/student/dashboard']);
-      }, 2000);
+      
+      this.route.params.pipe(
+        map(params => params['courseId']),
+        take(1),
+        switchMap(courseId => this.enrollmentService.enroll({ courseId }))
+      ).subscribe({
+        next: (enrollment) => {
+          this.isLoading = false;
+          if (enrollment) {
+            this.toastService.success('Course enrolled successfully!');
+            this.router.navigate(['/student/dashboard']);
+          } else {
+            this.toastService.error('Enrollment failed. Please try again.');
+          }
+        },
+        error: (err) => {
+          this.isLoading = false;
+          this.toastService.error('An error occurred during enrollment.');
+          console.error('Checkout error:', err);
+        }
+      });
     }
   }
 }
