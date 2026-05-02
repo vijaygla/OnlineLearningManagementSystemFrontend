@@ -103,7 +103,7 @@ export class LoginComponent implements OnInit {
           // Redirect to verification if account exists but isn't verified
           if (this.errorMessage.toLowerCase().includes('verify your email')) {
             this.toastService.info('Account exists but email is not verified.');
-            this.router.navigate(['/auth/verify-email'], { queryParams: { email } });
+            this.router.navigate(['/auth/verify-email'], { queryParams: { email, resend: 'true' } });
           } else {
             this.toastService.error(this.errorMessage);
           }

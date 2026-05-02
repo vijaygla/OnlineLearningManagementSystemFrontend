@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { ToastService } from '../../../core/services/toast';
 import { LucideAngularModule, ShieldCheck, ArrowRight, Loader2 } from 'lucide-angular';
+import { timeout, catchError, EMPTY } from 'rxjs';
 
 @Component({
   selector: 'app-verify-otp',
@@ -42,7 +43,7 @@ import { LucideAngularModule, ShieldCheck, ArrowRight, Loader2 } from 'lucide-an
           >
             <lucide-icon *ngIf="!isLoading" [name]="ArrowRight" size="18"></lucide-icon>
             <lucide-icon *ngIf="isLoading" [name]="Loader2" class="animate-spin" size="18"></lucide-icon>
-            {{isLoading ? 'Verifying...' : 'Verify & Complete'}}
+            {{isVerifying ? 'Verifying...' : (isResending ? 'Resending...' : 'Verify & Complete')}}
           </button>
 
           <p class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -54,7 +55,7 @@ import { LucideAngularModule, ShieldCheck, ArrowRight, Loader2 } from 'lucide-an
     </div>
   `
 })
-export class VerifyOtpComponent {
+export class VerifyOtpComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -66,34 +67,55 @@ export class VerifyOtpComponent {
 
   email = this.route.snapshot.queryParams['email'] || '';
   otp = '';
-  isLoading = false;
+  isVerifying = false;
+  isResending = false;
+
+  get isLoading() {
+    return this.isVerifying || this.isResending;
+  }
+
+  ngOnInit() {
+    // Automatically trigger resend if landing here from a failed login attempt
+    if (this.route.snapshot.queryParams['resend'] === 'true') {
+      this.resend();
+    }
+  }
 
   verify() {
     if (this.otp.length === 6) {
-      this.isLoading = true;
-      this.authService.verifyOtp(this.email, this.otp).subscribe({
+      this.isVerifying = true;
+      this.authService.verifyOtp(this.email, this.otp).pipe(
+        timeout(15000),
+        catchError(err => {
+          this.isVerifying = false;
+          const msg = err.name === 'TimeoutError' ? 'Verification timed out. Please try again.' : (err.error?.message || 'Invalid verification code.');
+          this.toastService.error(msg);
+          return EMPTY;
+        })
+      ).subscribe({
         next: () => {
+          this.isVerifying = false;
           this.toastService.success('Email verified successfully! You can now log in.');
           this.router.navigate(['/auth/login']);
-        },
-        error: (err) => {
-          this.isLoading = false;
-          this.toastService.error(err.error?.message || 'Invalid verification code.');
         }
       });
     }
   }
 
   resend() {
-    this.isLoading = true;
-    this.authService.resendOtp(this.email).subscribe({
+    this.isResending = true;
+    this.authService.resendOtp(this.email).pipe(
+      timeout(15000),
+      catchError(err => {
+        this.isResending = false;
+        const msg = err.name === 'TimeoutError' ? 'Resend timed out. Please check if RabbitMQ and Notification services are running.' : (err.error?.message || 'Failed to resend OTP.');
+        this.toastService.error(msg);
+        return EMPTY;
+      })
+    ).subscribe({
       next: () => {
-        this.isLoading = false;
+        this.isResending = false;
         this.toastService.success('A new OTP has been sent to your email.');
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.toastService.error(err.error?.message || 'Failed to resend OTP.');
       }
     });
   }
