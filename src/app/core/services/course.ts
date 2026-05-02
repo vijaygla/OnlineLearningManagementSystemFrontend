@@ -23,6 +23,26 @@ export class CourseService {
     );
   }
 
+  getInstructorCourses(): Observable<Course[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/instructor`).pipe(
+      map(courses => courses.map(c => this.mapToCourse(c))),
+      catchError(err => {
+        console.error('Error fetching instructor courses:', err);
+        return of([]);
+      })
+    );
+  }
+
+  getCoursesByStatus(status: number): Observable<Course[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/status/${status}`).pipe(
+      map(courses => courses.map(c => this.mapToCourse(c))),
+      catchError(err => {
+        console.error(`Error fetching courses with status ${status}:`, err);
+        return of([]);
+      })
+    );
+  }
+
   getCourseById(id: string): Observable<Course | undefined> {
     return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
       map(c => this.mapToCourse(c)),
@@ -43,6 +63,10 @@ export class CourseService {
     return this.http.put<void>(`${this.apiUrl}/${id}`, course);
   }
 
+  updateCourseStatus(id: string, status: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/status`, { status });
+  }
+
   deleteCourse(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
@@ -51,35 +75,46 @@ export class CourseService {
     // Basic mapping from backend fields
     // We use placeholders for fields not currently returned by the Course entity
     
+    // Log the raw course for debugging
+    console.log('Mapping course:', apiCourse);
+
     const placeholderImages = [
       'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800',
       'https://images.unsplash.com/photo-1516116216624-53e697fedbea?q=80&w=800',
       'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800',
       'https://images.unsplash.com/photo-1586717791821-3f44a563eb4c?q=80&w=800'
     ];
-    const imageIndex = Math.abs(this.hashCode(apiCourse.id)) % placeholderImages.length;
+    
+    const id = apiCourse.id || apiCourse.Id || '';
+    const title = apiCourse.title || apiCourse.Title || 'Untitled Course';
+    const description = apiCourse.description || apiCourse.Description || '';
+    const price = apiCourse.price !== undefined ? apiCourse.price : (apiCourse.Price !== undefined ? apiCourse.Price : 0);
+    const status = apiCourse.status !== undefined ? apiCourse.status : (apiCourse.Status !== undefined ? apiCourse.Status : 0);
+
+    const imageIndex = Math.abs(this.hashCode(id)) % placeholderImages.length;
 
     // Simple category mapping based on known IDs if possible, or fallback
     let categoryName = 'General';
-    if (apiCourse.title.toLowerCase().includes('java') || apiCourse.title.toLowerCase().includes('programming')) {
+    if (title.toLowerCase().includes('java') || title.toLowerCase().includes('programming')) {
       categoryName = 'Development';
-    } else if (apiCourse.title.toLowerCase().includes('learning')) {
+    } else if (title.toLowerCase().includes('learning')) {
       categoryName = 'Data Science';
     }
 
     return {
-      id: apiCourse.id,
-      title: apiCourse.title,
-      description: apiCourse.description,
-      instructorName: apiCourse.instructorName || 'Expert Instructor',
-      price: apiCourse.price,
+      id: id,
+      title: title,
+      description: description,
+      instructorName: apiCourse.instructorName || apiCourse.InstructorName || 'Expert Instructor',
+      price: price,
       rating: 4.5 + (Math.random() * 0.4), // Pseudo-random for visual polish
       reviewCount: Math.floor(Math.random() * 500) + 50,
-      thumbnailUrl: apiCourse.thumbnailUrl || placeholderImages[imageIndex],
+      thumbnailUrl: apiCourse.thumbnailUrl || apiCourse.ThumbnailUrl || placeholderImages[imageIndex],
       category: categoryName,
       level: 'Intermediate',
       duration: '12h 45m',
-      lessonCount: 15
+      lessonCount: 15,
+      status: status
     };
   }
 

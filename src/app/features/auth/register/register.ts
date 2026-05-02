@@ -45,18 +45,30 @@ export class RegisterComponent implements OnInit {
 
   private initializeGoogleLogin() {
     if (typeof google !== 'undefined') {
-      google.accounts.id.disableAutoSelect();
-      
-      google.accounts.id.initialize({
-        client_id: environment.googleClientId,
-        callback: (response: any) => this.handleGoogleLogin(response),
-        auto_select: false,
-        cancel_on_tap_outside: true
-      });
-      google.accounts.id.renderButton(
-        document.getElementById('google-btn'),
-        { theme: 'outline', size: 'large', width: '100%', text: 'signup_with', shape: 'pill' }
-      );
+      // Prevent multiple initializations
+      if (!(window as any).googleInitialized) {
+        google.accounts.id.initialize({
+          client_id: environment.googleClientId,
+          callback: (response: any) => this.handleGoogleLogin(response),
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+        (window as any).googleInitialized = true;
+      }
+
+      // Always try to render the button
+      setTimeout(() => {
+        const btn = document.getElementById('google-btn');
+        if (btn) {
+          google.accounts.id.renderButton(btn, { 
+            theme: 'outline', 
+            size: 'large', 
+            width: '100%', 
+            text: 'signup_with', 
+            shape: 'pill' 
+          });
+        }
+      }, 100);
     }
   }
 
@@ -89,12 +101,15 @@ export class RegisterComponent implements OnInit {
         role: formData.role!
       }).subscribe({
         next: (res) => {
-          this.toastService.success(`Account created successfully! Welcome, ${res.name}`);
-          this.router.navigate(['/']);
+          this.toastService.success(`Registration initiated! Please verify your email.`);
+          this.router.navigate(['/auth/verify-email'], { queryParams: { email: formData.email } });
         },
         error: (err) => {
           this.isLoading = false;
           this.errorMessage = err.error?.message || 'Registration failed.';
+          if (err.error?.detail) {
+            this.errorMessage += ` (${err.error.detail})`;
+          }
           this.toastService.error(this.errorMessage);
         }
       });

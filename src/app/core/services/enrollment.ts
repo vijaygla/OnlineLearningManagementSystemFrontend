@@ -20,6 +20,15 @@ export class EnrollmentService {
     );
   }
 
+  getEnrollmentCount(courseId: string): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/course/${courseId}/count`).pipe(
+      catchError(err => {
+        console.error(`Error fetching enrollment count for course ${courseId}:`, err);
+        return of(0);
+      })
+    );
+  }
+
   getMyEnrollments(): Observable<Enrollment[]> {
     return this.http.get<Enrollment[]>(`${this.apiUrl}/my-enrollments`).pipe(
       catchError(err => {

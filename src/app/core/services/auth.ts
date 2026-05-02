@@ -29,9 +29,7 @@ export class AuthService {
   }
 
   register(data: RegisterRequest) {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data).pipe(
-      tap(res => this.handleAuth(res))
-    );
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data);
   }
 
   login(data: LoginRequest) {
@@ -44,6 +42,23 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/google-login`, { idToken }).pipe(
       tap(res => this.handleAuth(res))
     );
+  }
+
+  verifyOtp(email: string, otp: string) {
+    return this.http.post<any>(`${this.apiUrl}/verify-otp`, { email, otp });
+  }
+
+  resendOtp(email: string) {
+    return this.http.post<any>(`${this.apiUrl}/resend-otp`, { email });
+  }
+
+  forgotPassword(email: string) {
+    // Wrap email in object to ensure it's sent as valid JSON { "email": "..." }
+    return this.http.post<any>(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(data: any) {
+    return this.http.post<any>(`${this.apiUrl}/reset-password`, data);
   }
 
   logout() {

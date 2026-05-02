@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { LandingComponent } from './features/home/landing/landing';
 import { LoginComponent } from './features/auth/login/login';
 import { RegisterComponent } from './features/auth/register/register';
+import { VerifyOtpComponent } from './features/auth/verify-otp/verify-otp';
+import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-password';
+import { ResetPasswordComponent } from './features/auth/reset-password/reset-password';
 import { CatalogComponent } from './features/courses/catalog/catalog';
 import { CourseDetailsComponent } from './features/courses/details/details';
 import { StudentDashboardComponent } from './features/student/dashboard/dashboard';
@@ -15,6 +18,9 @@ export const routes: Routes = [
   { path: '', component: LandingComponent },
   { path: 'auth/login', component: LoginComponent },
   { path: 'auth/register', component: RegisterComponent },
+  { path: 'auth/verify-email', component: VerifyOtpComponent },
+  { path: 'auth/forgot-password', component: ForgotPasswordComponent },
+  { path: 'auth/reset-password', component: ResetPasswordComponent },
   { path: 'courses', component: CatalogComponent },
   { path: 'courses/:id', component: CourseDetailsComponent },
   { path: 'student/dashboard', component: StudentDashboardComponent },

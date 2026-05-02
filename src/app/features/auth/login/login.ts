@@ -41,20 +41,30 @@ export class LoginComponent implements OnInit {
 
   private initializeGoogleLogin() {
     if (typeof google !== 'undefined') {
-      // Sign out first to ensure we can re-initialize if needed
-      google.accounts.id.disableAutoSelect();
-      
-      google.accounts.id.initialize({
-        client_id: environment.googleClientId,
-        callback: (response: any) => this.handleGoogleLogin(response),
-        auto_select: false,
-        cancel_on_tap_outside: true
-      });
+      // Prevent multiple initializations
+      if (!(window as any).googleInitialized) {
+        google.accounts.id.initialize({
+          client_id: environment.googleClientId,
+          callback: (response: any) => this.handleGoogleLogin(response),
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+        (window as any).googleInitialized = true;
+      }
 
-      google.accounts.id.renderButton(
-        document.getElementById('google-btn'),
-        { theme: 'outline', size: 'large', width: '100%', text: 'continue_with', shape: 'pill' }
-      );
+      // Always try to render the button
+      setTimeout(() => {
+        const btn = document.getElementById('google-btn');
+        if (btn) {
+          google.accounts.id.renderButton(btn, { 
+            theme: 'outline', 
+            size: 'large', 
+            width: '100%', 
+            text: 'continue_with', 
+            shape: 'pill' 
+          });
+        }
+      }, 100);
     }
   }
 
@@ -89,7 +99,14 @@ export class LoginComponent implements OnInit {
         error: (err) => {
           this.isLoading = false;
           this.errorMessage = err.error?.message || 'Invalid email or password.';
-          this.toastService.error(this.errorMessage);
+          
+          // Redirect to verification if account exists but isn't verified
+          if (this.errorMessage.toLowerCase().includes('verify your email')) {
+            this.toastService.info('Account exists but email is not verified.');
+            this.router.navigate(['/auth/verify-email'], { queryParams: { email } });
+          } else {
+            this.toastService.error(this.errorMessage);
+          }
         }
       });
     }

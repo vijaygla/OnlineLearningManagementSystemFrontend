@@ -11,6 +11,9 @@ export interface Course {
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   duration: string; // e.g. "12h 30m"
   lessonCount: number;
+  status: number;
+  enrollmentCount?: number;
+  revenue?: number;
 }
 
 export interface Category {
