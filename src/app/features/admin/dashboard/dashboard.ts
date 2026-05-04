@@ -1,21 +1,21 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, ShieldCheck, Users, BookOpen, AlertCircle, Check, X, Search, Loader2, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, ShieldCheck, Users, BookOpen, AlertCircle, Check, X, Search, Loader2, Trash2, RefreshCw } from 'lucide-angular';
 import { CourseService } from '../../../core/services/course';
 import { UserService } from '../../../core/services/user';
 import { ToastService } from '../../../core/services/toast';
-import { map, forkJoin, of, switchMap, shareReplay, BehaviorSubject, combineLatest, startWith, catchError } from 'rxjs';
+import { map, forkJoin, of, switchMap, shareReplay, BehaviorSubject, combineLatest, startWith, catchError, timer, Subject, takeUntil, merge } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Course } from '../../../core/models/course.models';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, FormsModule],
+  imports: [CommonModule, LucideAngularModule, FormsModule, RouterLink],
   templateUrl: './dashboard.html'
 })
-export class AdminDashboardComponent {
+export class AdminDashboardComponent implements OnDestroy {
   private courseService = inject(CourseService);
   private userService = inject(UserService);
   private toastService = inject(ToastService);
@@ -29,12 +29,26 @@ export class AdminDashboardComponent {
   readonly Search = Search;
   readonly Loader2 = Loader2;
   readonly Trash2 = Trash2;
+  readonly RefreshCw = RefreshCw;
 
+  private destroy$ = new Subject<void>();
   public refreshSubject = new BehaviorSubject<void>(undefined);
+  
+  // Real-time polling: Refresh data every 15 seconds
+  private autoRefresh$ = timer(15000, 15000).pipe(
+    takeUntil(this.destroy$),
+    map(() => undefined)
+  );
+
+  private triggerRefresh$ = merge(this.refreshSubject, this.autoRefresh$);
+
   userSearchQuery = '';
   private userSearchSubject = new BehaviorSubject<string>('');
 
-  pendingCourses$ = this.refreshSubject.pipe(
+  // Track loading state for specific actions
+  processingIds = new Set<string>();
+
+  pendingCourses$ = this.triggerRefresh$.pipe(
     switchMap(() => this.courseService.getCoursesByStatus(0)), // 0 = Pending
     map(courses => courses.map(c => ({
       ...c,
@@ -44,7 +58,7 @@ export class AdminDashboardComponent {
   );
 
   users$ = combineLatest([
-    this.refreshSubject.pipe(switchMap(() => this.userService.getAllUsers())),
+    this.triggerRefresh$.pipe(switchMap(() => this.userService.getAllUsers())),
     this.userSearchSubject.pipe(startWith(''))
   ]).pipe(
     map(([users, query]) => {
@@ -58,7 +72,7 @@ export class AdminDashboardComponent {
     shareReplay(1)
   );
 
-  stats$ = this.refreshSubject.pipe(
+  stats$ = this.triggerRefresh$.pipe(
     switchMap(() => forkJoin({
       totalUsers: this.userService.getUserCount().pipe(catchError(() => of(0))),
       activeCourses: this.courseService.getCoursesByStatus(1).pipe(catchError(() => of([]))), // 1 = Approved
@@ -72,32 +86,53 @@ export class AdminDashboardComponent {
     ])
   );
 
-  allCourses$ = this.refreshSubject.pipe(
+  allCourses$ = this.triggerRefresh$.pipe(
     switchMap(() => this.courseService.getCourses()),
     shareReplay(1)
   );
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   onUserSearchChange() {
     this.userSearchSubject.next(this.userSearchQuery);
   }
 
   approveCourse(id: string) {
+    if (this.processingIds.has(id)) return;
+    
+    this.processingIds.add(id);
     this.courseService.updateCourseStatus(id, 1).subscribe({ // 1 = Approved
       next: () => {
         this.toastService.success('Course approved successfully');
+        this.processingIds.delete(id);
         this.refreshSubject.next();
       },
-      error: () => this.toastService.error('Failed to approve course')
+      error: () => {
+        this.toastService.error('Failed to approve course');
+        this.processingIds.delete(id);
+      }
     });
   }
 
   rejectCourse(id: string) {
+    if (this.processingIds.has(id)) return;
+
+    if (!confirm('Are you sure you want to reject this course?')) return;
+    
+    this.processingIds.add(id);
     this.courseService.updateCourseStatus(id, 2).subscribe({ // 2 = Rejected
       next: () => {
         this.toastService.success('Course rejected');
+        this.processingIds.delete(id);
         this.refreshSubject.next();
       },
-      error: () => this.toastService.error('Failed to reject course')
+      error: () => {
+        this.toastService.error('Failed to reject course');
+        this.processingIds.delete(id);
+      }
     });
   }
 
@@ -111,5 +146,9 @@ export class AdminDashboardComponent {
         error: () => this.toastService.error('Failed to delete user')
       });
     }
+  }
+
+  isProcessing(id: string): boolean {
+    return this.processingIds.has(id);
   }
 }
