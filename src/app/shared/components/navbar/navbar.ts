@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { LucideAngularModule, Search, Menu, X, User, Bell, LogOut, ChevronDown } from 'lucide-angular';
 import { AuthService } from '../../../core/services/auth';
 import { ToastService } from '../../../core/services/toast';
@@ -15,6 +15,8 @@ import { ToastService } from '../../../core/services/toast';
 export class NavbarComponent {
   authService = inject(AuthService);
   toastService = inject(ToastService);
+  router = inject(Router);
+  private eRef = inject(ElementRef);
   
   readonly Search = Search;
   readonly Menu = Menu;
@@ -29,6 +31,13 @@ export class NavbarComponent {
   isProfileOpen = signal(false);
   imageError = signal(false);
 
+  @HostListener('document:click', ['$event'])
+  clickout(event: any) {
+    if (!this.eRef.nativeElement.contains(event.target)) {
+      this.isProfileOpen.set(false);
+    }
+  }
+
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('scroll', () => {
@@ -41,7 +50,8 @@ export class NavbarComponent {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
-  toggleProfile() {
+  toggleProfile(event: Event) {
+    event.stopPropagation();
     this.isProfileOpen.update(v => !v);
   }
 

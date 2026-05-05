@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Search, SlidersHorizontal, ChevronDown, Loader2, ChevronLeft, ChevronRight } from 'lucide-angular';
@@ -6,6 +6,7 @@ import { CourseService } from '../../../core/services/course';
 import { SearchService } from '../../../core/services/search';
 import { CourseCardComponent } from '../../../shared/components/course-card/course-card';
 import { BehaviorSubject, combineLatest, map, shareReplay, switchMap, debounceTime, distinctUntilChanged, startWith, of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-catalog',
@@ -13,9 +14,10 @@ import { BehaviorSubject, combineLatest, map, shareReplay, switchMap, debounceTi
   imports: [CommonModule, FormsModule, LucideAngularModule, CourseCardComponent],
   templateUrl: './catalog.html'
 })
-export class CatalogComponent {
+export class CatalogComponent implements OnInit {
   private courseService = inject(CourseService);
   private searchService = inject(SearchService);
+  private route = inject(ActivatedRoute);
 
   readonly Search = Search;
   readonly SlidersHorizontal = SlidersHorizontal;
@@ -31,6 +33,18 @@ export class CatalogComponent {
   selectedCategory = 'All';
   searchQuery = '';
   isSearching = false;
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      if (params['q']) {
+        this.searchQuery = params['q'];
+        this.searchSubject.next(this.searchQuery);
+      } else {
+        this.searchQuery = '';
+        this.searchSubject.next('');
+      }
+    });
+  }
 
   allCourses$ = this.courseService.getCourses().pipe(
     shareReplay(1)

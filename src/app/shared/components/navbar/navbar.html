@@ -23,11 +23,6 @@
 
       <!-- Actions -->
       <div class="hidden md:flex items-center gap-4">
-        <div class="relative">
-          <input type="text" placeholder="Search courses..." class="pl-11 pr-4 py-2 rounded-full bg-slate-100 border-transparent focus:bg-white focus:border-primary-300 focus:ring-4 focus:ring-primary-500/10 transition-all w-64 text-sm">
-          <lucide-icon [name]="Search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size="16"></lucide-icon>
-        </div>
-
         <ng-container *ngIf="!authService.currentUser(); else userProfile">
           <button routerLink="/auth/login" class="px-5 py-2 font-semibold text-slate-600 hover:text-primary-600 transition-colors">Log in</button>
           <button routerLink="/auth/register" class="btn-primary py-2 px-5 text-sm">Sign up</button>
@@ -40,7 +35,7 @@
             </button>
             
             <div class="relative">
-              <button (click)="toggleProfile()" class="flex items-center gap-2 pl-2 pr-2 py-1 rounded-full border border-slate-200 hover:border-primary-300 transition-all bg-white">
+              <button (click)="toggleProfile($event)" class="flex items-center gap-2 pl-2 pr-2 py-1 rounded-full border border-slate-200 hover:border-primary-300 transition-all bg-white">
                 @if (authService.currentUser()?.profilePictureUrl && !imageError()) {
                   <img [src]="authService.currentUser()?.profilePictureUrl" 
                        (error)="handleImageError()"

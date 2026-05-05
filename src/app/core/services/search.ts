@@ -26,6 +26,21 @@ export class SearchService {
     );
   }
 
+  searchUsers(query: string): Observable<any[]> {
+    if (!query || query.trim().length === 0) {
+      return of([]);
+    }
+
+    return this.http.get<any[]>(`${this.apiUrl}/users`, {
+      params: { q: query }
+    }).pipe(
+      catchError(err => {
+        console.error('User search failed:', err);
+        return of([]);
+      })
+    );
+  }
+
   testConnection(): Observable<any> {
     return this.http.get(`${this.apiUrl}/test`);
   }

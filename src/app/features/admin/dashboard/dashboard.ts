@@ -4,8 +4,9 @@ import { RouterLink } from '@angular/router';
 import { LucideAngularModule, ShieldCheck, Users, BookOpen, AlertCircle, Check, X, Search, Loader2, Trash2, RefreshCw } from 'lucide-angular';
 import { CourseService } from '../../../core/services/course';
 import { UserService } from '../../../core/services/user';
+import { SearchService } from '../../../core/services/search';
 import { ToastService } from '../../../core/services/toast';
-import { map, forkJoin, of, switchMap, shareReplay, BehaviorSubject, combineLatest, startWith, catchError, timer, Subject, takeUntil, merge } from 'rxjs';
+import { map, forkJoin, of, switchMap, shareReplay, BehaviorSubject, combineLatest, startWith, catchError, timer, Subject, takeUntil, merge, debounceTime, distinctUntilChanged } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Course } from '../../../core/models/course.models';
 
@@ -44,6 +45,7 @@ export class AdminDashboardComponent implements OnDestroy {
 
   userSearchQuery = '';
   private userSearchSubject = new BehaviorSubject<string>('');
+  isSearchingUsers = false;
 
   // Track loading state for specific actions
   processingIds = new Set<string>();
@@ -57,16 +59,37 @@ export class AdminDashboardComponent implements OnDestroy {
     shareReplay(1)
   );
 
+  private searchService = inject(SearchService);
+
   users$ = combineLatest([
     this.triggerRefresh$.pipe(switchMap(() => this.userService.getAllUsers())),
-    this.userSearchSubject.pipe(startWith(''))
+    this.userSearchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      startWith('')
+    )
   ]).pipe(
-    map(([users, query]) => {
-      if (!query.trim()) return users;
-      const lowerQuery = query.toLowerCase();
-      return users.filter(u => 
-        u.name.toLowerCase().includes(lowerQuery) || 
-        u.email.toLowerCase().includes(lowerQuery)
+    switchMap(([allUsers, query]: [any[], string]) => {
+      if (!query.trim()) return of(allUsers);
+      
+      this.isSearchingUsers = true;
+      return this.searchService.searchUsers(query).pipe(
+        map((searchResults: any[]) => {
+          this.isSearchingUsers = false;
+          // If we have search results from MeiliSearch, we might want to 
+          // ensure they match the structure of the users from UserService
+          // or just use them if they are compatible.
+          return searchResults.length > 0 ? searchResults : [];
+        }),
+        catchError(() => {
+          this.isSearchingUsers = false;
+          // Fallback to local filtering if backend search fails
+          const lowerQuery = query.toLowerCase();
+          return of(allUsers.filter((u: any) => 
+            u.name.toLowerCase().includes(lowerQuery) || 
+            u.email.toLowerCase().includes(lowerQuery)
+          ));
+        })
       );
     }),
     shareReplay(1)

@@ -144,9 +144,12 @@
               [(ngModel)]="userSearchQuery"
               (ngModelChange)="onUserSearchChange()"
               placeholder="Search by name/email..." 
-              class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border-transparent focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-xs font-bold"
+              class="w-full pl-10 pr-10 py-2 rounded-xl bg-slate-50 border-transparent focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-xs font-bold"
             >
             <lucide-icon [name]="Search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size="14"></lucide-icon>
+            <div *ngIf="isSearchingUsers" class="absolute right-3 top-1/2 -translate-y-1/2">
+              <lucide-icon [name]="Loader2" class="animate-spin text-primary-500" size="14"></lucide-icon>
+            </div>
           </div>
         </div>
 
