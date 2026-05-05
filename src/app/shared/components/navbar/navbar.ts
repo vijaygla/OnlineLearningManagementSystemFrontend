@@ -4,6 +4,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { LucideAngularModule, Search, Menu, X, User, Bell, LogOut, ChevronDown } from 'lucide-angular';
 import { AuthService } from '../../../core/services/auth';
 import { ToastService } from '../../../core/services/toast';
+import { NotificationService } from '../../../core/services/notification';
 
 @Component({
   selector: 'app-navbar',
@@ -15,6 +16,7 @@ import { ToastService } from '../../../core/services/toast';
 export class NavbarComponent {
   authService = inject(AuthService);
   toastService = inject(ToastService);
+  notificationService = inject(NotificationService);
   router = inject(Router);
   private eRef = inject(ElementRef);
   
@@ -29,12 +31,14 @@ export class NavbarComponent {
   isMenuOpen = false;
   isScrolled = false;
   isProfileOpen = signal(false);
+  isNotificationsOpen = signal(false);
   imageError = signal(false);
 
   @HostListener('document:click', ['$event'])
   clickout(event: any) {
     if (!this.eRef.nativeElement.contains(event.target)) {
       this.isProfileOpen.set(false);
+      this.isNotificationsOpen.set(false);
     }
   }
 
@@ -52,7 +56,22 @@ export class NavbarComponent {
 
   toggleProfile(event: Event) {
     event.stopPropagation();
+    this.isNotificationsOpen.set(false);
     this.isProfileOpen.update(v => !v);
+  }
+
+  toggleNotifications(event: Event) {
+    event.stopPropagation();
+    this.isProfileOpen.set(false);
+    this.isNotificationsOpen.update(v => !v);
+  }
+
+  markAsRead(id: string) {
+    this.notificationService.markAsRead(id).subscribe();
+  }
+
+  markAllAsRead() {
+    this.notificationService.markAllAsRead().subscribe();
   }
 
   handleImageError() {

@@ -9,4 +9,5 @@ export interface Enrollment {
 
 export interface EnrollmentRequest {
   courseId: string;
+  courseName: string;
 }

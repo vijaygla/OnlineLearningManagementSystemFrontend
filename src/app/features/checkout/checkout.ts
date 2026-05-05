@@ -43,15 +43,19 @@ export class CheckoutComponent {
   isLoading = false;
 
   onSubmit() {
-    if (this.checkoutForm.valid) {
-      this.isLoading = true;
-      
-      this.route.params.pipe(
-        map(params => params['courseId']),
-        take(1),
-        switchMap(courseId => this.enrollmentService.enroll({ courseId }))
-      ).subscribe({
-        next: (enrollment) => {
+   if (this.checkoutForm.valid) {
+     this.isLoading = true;
+
+     this.course$.pipe(
+       take(1),
+       switchMap(course => {
+         if (!course) throw new Error('Course not found');
+         return this.enrollmentService.enroll({ 
+           courseId: course.id,
+           courseName: course.title
+         });
+       })
+     ).subscribe({        next: (enrollment) => {
           this.isLoading = false;
           if (enrollment) {
             this.toastService.success('Course enrolled successfully!');
