@@ -13,6 +13,7 @@ import { CheckoutComponent } from './features/checkout/checkout';
 import { InstructorDashboardComponent } from './features/instructor/dashboard/dashboard';
 import { CourseBuilderComponent } from './features/instructor/builder/builder';
 import { AdminDashboardComponent } from './features/admin/dashboard/dashboard';
+import { ProfileComponent } from './features/student/profile/profile';
 import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
@@ -31,5 +32,6 @@ export const routes: Routes = [
   { path: 'instructor/builder', component: CourseBuilderComponent },
   { path: 'instructor/builder/:id', component: CourseBuilderComponent },
   { path: 'admin/dashboard', component: AdminDashboardComponent, canActivate: [adminGuard] },
+  { path: 'profile', component: ProfileComponent },
   { path: '**', redirectTo: '' }
 ];

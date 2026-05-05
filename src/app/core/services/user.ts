@@ -8,10 +8,31 @@ import { catchError, map, Observable, of, tap } from 'rxjs';
 })
 export class UserService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/users`;
+  private apiUrl = `${environment.apiUrl}/user`; // Match backend UserController route [Route("api/[controller]")]
+  private adminApiUrl = `${environment.apiUrl}/users`; // Match backend UsersController route [Route("api/[controller]")] for Admin
 
+  // --- Profile Methods ---
+  getProfile(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/profile`);
+  }
+
+  updateProfile(dto: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/profile`, dto);
+  }
+
+  uploadProfilePicture(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/profile/picture`, formData);
+  }
+
+  deleteAccount(): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/account`);
+  }
+
+  // --- Admin Methods ---
   getAllUsers(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl).pipe(
+    return this.http.get<any[]>(this.adminApiUrl).pipe(
       tap(users => console.log('Raw users from Identity API:', users)),
       map((users: any[]) => users.map((u: any) => ({
         id: u.id || u.Id,
@@ -27,7 +48,7 @@ export class UserService {
   }
 
   getUserCount(): Observable<number> {
-    return this.http.get<number>(`${this.apiUrl}/count`).pipe(
+    return this.http.get<number>(`${this.adminApiUrl}/count`).pipe(
       catchError(err => {
         console.error('Error fetching user count:', err);
         return of(0);
@@ -36,6 +57,6 @@ export class UserService {
   }
 
   deleteUser(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.adminApiUrl}/${id}`);
   }
 }
