@@ -15,12 +15,20 @@ export class ReviewService {
     return this.http.get<Review[]>(`${this.apiUrl}/course/${courseId}`);
   }
 
+  getReviewsByCourseId(courseId: string): Observable<Review[]> {
+    return this.getCourseReviews(courseId);
+  }
+
   getCourseRating(courseId: string): Observable<CourseRating> {
     return this.http.get<CourseRating>(`${this.apiUrl}/course/${courseId}/rating`);
   }
 
   createReview(request: CreateReviewRequest): Observable<Review> {
     return this.http.post<Review>(this.apiUrl, request);
+  }
+
+  addReview(request: CreateReviewRequest): Observable<Review> {
+    return this.createReview(request);
   }
 
   updateReview(id: string, request: UpdateReviewRequest): Observable<void> {

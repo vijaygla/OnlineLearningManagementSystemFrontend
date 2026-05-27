@@ -6,7 +6,7 @@ import { CourseService } from '../../../core/services/course';
 import { EnrollmentService } from '../../../core/services/enrollment';
 import { ProgressService } from '../../../core/services/progress';
 import { CertificateService } from '../../../core/services/certificate';
-import { forkJoin, map, of, switchMap, catchError, shareReplay, tap } from 'rxjs';
+import { forkJoin, map, of, switchMap, catchError, shareReplay, tap, combineLatest } from 'rxjs';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -50,7 +50,7 @@ export class StudentDashboardComponent {
       );
       
       return forkJoin(courseDetailsRequests).pipe(
-        map(results => results.filter(r => r !== null))
+        map(results => results.filter((r): r is any => r !== null))
       );
     }),
     shareReplay(1)
@@ -59,7 +59,7 @@ export class StudentDashboardComponent {
   certificates$ = this.certificateService.getMyCertificates().pipe(shareReplay(1));
 
   stats$ = combineLatest([this.enrolledCourses$, this.certificates$]).pipe(
-    map(([courses, certs]) => {
+    map(([courses, certs]: [any[], any[]]) => {
       const completed = courses.filter(c => c.progress === 100).length;
       return [
         { label: 'Enrolled Courses', value: courses.length.toString(), icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-50' },

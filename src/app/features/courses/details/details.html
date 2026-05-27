@@ -138,10 +138,10 @@
             <div *ngFor="let review of reviews" class="p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:border-primary-100 transition-all group">
               <div class="flex items-center gap-5 mb-6">
                 <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center font-black text-slate-400 text-xl border border-slate-100 shadow-sm">
-                  {{review.studentName.charAt(0)}}
+                  {{review.studentId.charAt(0)}}
                 </div>
                 <div>
-                  <h4 class="font-black text-slate-900 text-lg leading-tight mb-1">{{review.studentName}}</h4>
+                  <h4 class="font-black text-slate-900 text-lg leading-tight mb-1">{{review.studentId}}</h4>
                   <div class="flex items-center gap-3">
                     <div class="flex items-center">
                       <lucide-icon *ngFor="let i of [1,2,3,4,5]" [name]="Star" 
@@ -189,7 +189,13 @@
             <span class="px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 text-xs font-bold">50% OFF</span>
           </div>
 
-          <button [routerLink]="['/checkout', course.id]" class="btn-primary w-full py-4 text-lg mb-4">Enroll Now</button>
+          <ng-container *ngIf="currentUser()?.role === 'Student'">
+            <button *ngIf="!(isEnrolled$ | async)" [routerLink]="['/checkout', course.id]" class="btn-primary w-full py-4 text-lg mb-4">Enroll Now</button>
+            <button *ngIf="isEnrolled$ | async" [routerLink]="['/learn/player', course.id]" class="btn-secondary w-full py-4 text-lg mb-4">Go to Course</button>
+          </ng-container>
+
+          <p *ngIf="currentUser()?.role === 'Instructor'" class="text-center text-xs font-bold text-primary-600 mb-6 bg-primary-50 py-2 rounded-xl border border-primary-100 uppercase tracking-widest">You are viewing as Instructor</p>
+          
           <p class="text-center text-sm text-slate-500 mb-8">30-Day Money-Back Guarantee</p>
 
           <div class="space-y-4">

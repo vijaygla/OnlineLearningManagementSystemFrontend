@@ -7,6 +7,7 @@ import { CourseService } from '../../../core/services/course';
 import { ContentService } from '../../../core/services/content';
 import { ReviewService } from '../../../core/services/review';
 import { EnrollmentService } from '../../../core/services/enrollment';
+import { AuthService } from '../../../core/services/auth';
 import { map, switchMap, shareReplay, tap, of, catchError } from 'rxjs';
 
 @Component({
@@ -21,6 +22,9 @@ export class CourseDetailsComponent {
   private contentService = inject(ContentService);
   private reviewService = inject(ReviewService);
   private enrollmentService = inject(EnrollmentService);
+  private authService = inject(AuthService);
+
+  currentUser = this.authService.currentUser;
 
   readonly Star = Star;
   readonly Clock = Clock;

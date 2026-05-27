@@ -8,6 +8,7 @@ import { ContentService } from '../../../core/services/content';
 import { MediaService } from '../../../core/services/media';
 import { CategoryService } from '../../../core/services/category';
 import { AssessmentService } from '../../../core/services/assessment';
+import { ToastService } from '../../../core/services/toast';
 import { Lesson, Section } from '../../../core/models/content.models';
 import { Category } from '../../../core/models/category.models';
 import { Quiz, Question } from '../../../core/models/assessment.models';
@@ -27,6 +28,7 @@ export class CourseBuilderComponent implements OnInit {
   private mediaService = inject(MediaService);
   private categoryService = inject(CategoryService);
   private assessmentService = inject(AssessmentService);
+  private toastService = inject(ToastService);
 
   readonly ChevronLeft = ChevronLeft;
   readonly ChevronRight = ChevronRight;
@@ -99,7 +101,10 @@ export class CourseBuilderComponent implements OnInit {
     });
 
     this.contentService.getSectionsByCourseId(this.courseId).subscribe(sections => {
-      this.sections = sections.sort((a, b) => a.order - b.order);
+      this.sections = (sections || []).map(s => ({
+        ...s,
+        lessons: s.lessons || []
+      })).sort((a, b) => a.order - b.order);
     });
 
     this.assessmentService.getQuizByCourseId(this.courseId).subscribe(quiz => {
@@ -129,7 +134,9 @@ export class CourseBuilderComponent implements OnInit {
       this.courseService.updateCourse(this.courseId, courseData).subscribe({
         next: () => {
           this.isSaving = false;
-          this.nextStep();
+          if (this.currentStep === 1) {
+            this.nextStep();
+          }
         },
         error: (err) => {
           this.isSaving = false;
@@ -171,25 +178,43 @@ export class CourseBuilderComponent implements OnInit {
   // --- Curriculum Actions ---
 
   addSection() {
-    if (!this.courseId) return;
+    if (!this.courseId) {
+      this.toastService.error('Course ID is missing. Please save course details first.');
+      return;
+    }
     const newSection: Partial<Section> = {
       courseId: this.courseId,
       title: 'New Module',
       order: this.sections.length + 1
     };
 
-    this.contentService.createSection(newSection).subscribe(section => {
-      this.sections.push({ ...section, lessons: [] });
+    this.contentService.createSection(newSection).subscribe({
+      next: (section) => {
+        this.sections = [...this.sections, { ...section, lessons: [] }];
+        this.toastService.success('Module added successfully');
+      },
+      error: (err) => {
+        console.error('Failed to create section', err);
+        this.toastService.error('Failed to create module. Backend service may be offline.');
+      }
     });
   }
 
   updateSection(section: Section) {
-    this.contentService.updateSection(section.id, section).subscribe();
+    this.contentService.updateSection(section.id, section).subscribe({
+      next: () => this.toastService.info('Module title updated'),
+      error: () => this.toastService.error('Failed to update module title')
+    });
   }
 
   deleteSection(sectionId: string) {
-    this.contentService.deleteSection(sectionId).subscribe(() => {
-      this.sections = this.sections.filter(s => s.id !== sectionId);
+    if (!confirm('Are you sure you want to delete this module and all its lessons?')) return;
+    this.contentService.deleteSection(sectionId).subscribe({
+      next: () => {
+        this.sections = this.sections.filter(s => s.id !== sectionId);
+        this.toastService.success('Module deleted');
+      },
+      error: () => this.toastService.error('Failed to delete module')
     });
   }
 
@@ -205,18 +230,29 @@ export class CourseBuilderComponent implements OnInit {
       contentUrl: ''
     };
 
-    this.contentService.createLesson(newLesson).subscribe(lesson => {
-      section.lessons.push(lesson);
+    this.contentService.createLesson(newLesson).subscribe({
+      next: (lesson) => {
+        section.lessons = [...section.lessons, lesson];
+        this.toastService.success('Lesson added successfully');
+      },
+      error: () => this.toastService.error('Failed to add lesson')
     });
   }
 
   updateLesson(lesson: Lesson) {
-    this.contentService.updateLesson(lesson.id, lesson).subscribe();
+    this.contentService.updateLesson(lesson.id, lesson).subscribe({
+      next: () => this.toastService.info('Lesson updated'),
+      error: () => this.toastService.error('Failed to update lesson')
+    });
   }
 
   deleteLesson(section: Section, lessonId: string) {
-    this.contentService.deleteLesson(lessonId).subscribe(() => {
-      section.lessons = section.lessons.filter(l => l.id !== lessonId);
+    this.contentService.deleteLesson(lessonId).subscribe({
+      next: () => {
+        section.lessons = section.lessons.filter(l => l.id !== lessonId);
+        this.toastService.success('Lesson deleted');
+      },
+      error: () => this.toastService.error('Failed to delete lesson')
     });
   }
 

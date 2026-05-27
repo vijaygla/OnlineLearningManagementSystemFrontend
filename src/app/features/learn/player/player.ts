@@ -164,7 +164,7 @@ export class LearningPlayerComponent implements OnInit, OnDestroy {
 
   claimCertificate(course: any) {
     const user = this.authService.currentUser();
-    if (!user || !course) return;
+    if (!user || !user.id || !course) return;
 
     this.isClaimingCertificate = true;
     this.certificateService.issueCertificate({

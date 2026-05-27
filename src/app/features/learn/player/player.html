@@ -241,7 +241,7 @@
                 <div class="space-y-4">
                   <div class="flex items-center gap-2 mb-4">
                     <button *ngFor="let star of [1,2,3,4,5]" (click)="newReviewRating = star" class="text-2xl transition-colors" [class]="newReviewRating >= star ? 'text-amber-400' : 'text-slate-200'">
-                      <lucide-icon [name]="Star" [fill]="newReviewRating >= star ? '#fbbf24' : 'none'"></lucide-icon>
+                      <lucide-icon [name]="Star" [attr.fill]="newReviewRating >= star ? '#fbbf24' : 'none'"></lucide-icon>
                     </button>
                     <span class="ml-2 text-sm font-bold text-slate-500">{{newReviewRating}} / 5</span>
                   </div>
@@ -266,7 +266,7 @@
                       </div>
                       <div>
                         <div class="flex items-center gap-1">
-                          <lucide-icon *ngFor="let s of [1,2,3,4,5]" [name]="Star" size="12" [class]="review.rating >= s ? 'text-amber-400' : 'text-slate-200'" [fill]="review.rating >= s ? '#fbbf24' : 'none'"></lucide-icon>
+                          <lucide-icon *ngFor="let s of [1,2,3,4,5]" [name]="Star" size="12" [class]="review.rating >= s ? 'text-amber-400' : 'text-slate-200'" [attr.fill]="review.rating >= s ? '#fbbf24' : 'none'"></lucide-icon>
                         </div>
                         <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">{{review.createdAt | date:'mediumDate'}}</p>
                       </div>
