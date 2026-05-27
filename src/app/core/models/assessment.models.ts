@@ -11,19 +11,20 @@ export interface Question {
   id: string;
   quizId: string;
   text: string;
-  options: string[]; // Backend sends as semicolon separated, we'll parse it
+  options: string[];
   correctOptionIndex: number;
 }
 
 export interface QuizSubmission {
   quizId: string;
-  studentId: string;
-  answers: number[]; // Index of chosen options
+  studentId?: string;
+  answers: number[];
 }
 
 export interface QuizResult {
-  quizId: string;
+  submissionId: string;
   score: number;
   isPassed: boolean;
-  correctAnswers: number[];
+  totalQuestions: number;
+  submittedAt?: string;
 }

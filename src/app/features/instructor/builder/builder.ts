@@ -2,13 +2,15 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { LucideAngularModule, ChevronLeft, ChevronRight, Save, Plus, Trash2, Upload, FileVideo, FileText, Image as ImageIcon, Loader2, CheckCircle2, BookOpen } from 'lucide-angular';
+import { LucideAngularModule, ChevronLeft, ChevronRight, Save, Plus, Trash2, Upload, FileVideo, FileText, Image as ImageIcon, Loader2, CheckCircle2, BookOpen, GripVertical } from 'lucide-angular';
 import { CourseService } from '../../../core/services/course';
 import { ContentService } from '../../../core/services/content';
 import { MediaService } from '../../../core/services/media';
 import { CategoryService } from '../../../core/services/category';
-import { Lesson } from '../../../core/models/content.models';
+import { AssessmentService } from '../../../core/services/assessment';
+import { Lesson, Section } from '../../../core/models/content.models';
 import { Category } from '../../../core/models/category.models';
+import { Quiz, Question } from '../../../core/models/assessment.models';
 
 @Component({
   selector: 'app-course-builder',
@@ -24,6 +26,7 @@ export class CourseBuilderComponent implements OnInit {
   private contentService = inject(ContentService);
   private mediaService = inject(MediaService);
   private categoryService = inject(CategoryService);
+  private assessmentService = inject(AssessmentService);
 
   readonly ChevronLeft = ChevronLeft;
   readonly ChevronRight = ChevronRight;
@@ -37,6 +40,7 @@ export class CourseBuilderComponent implements OnInit {
   readonly Loader2 = Loader2;
   readonly CheckCircle2 = CheckCircle2;
   readonly BookOpen = BookOpen;
+  readonly GripVertical = GripVertical;
 
   currentStep = 1;
   courseId: string | null = null;
@@ -56,8 +60,12 @@ export class CourseBuilderComponent implements OnInit {
     thumbnailUrl: ['']
   });
 
-  lessons: Lesson[] = [];
+  sections: Section[] = [];
   categories: Category[] = [];
+  
+  // Quiz management
+  quiz: Quiz | null = null;
+  isCreatingQuiz = false;
 
   ngOnInit() {
     this.loadCategories();
@@ -86,13 +94,16 @@ export class CourseBuilderComponent implements OnInit {
           description: course.description,
           price: course.price,
           thumbnailUrl: course.thumbnailUrl,
-          // Note: Category matching would go here if backend returned categoryId
         });
       }
     });
 
-    this.contentService.getLessonsByCourseId(this.courseId).subscribe(lessons => {
-      this.lessons = lessons.sort((a, b) => a.order - b.order);
+    this.contentService.getSectionsByCourseId(this.courseId).subscribe(sections => {
+      this.sections = sections.sort((a, b) => a.order - b.order);
+    });
+
+    this.assessmentService.getQuizByCourseId(this.courseId).subscribe(quiz => {
+      this.quiz = quiz;
     });
   }
 
@@ -157,6 +168,58 @@ export class CourseBuilderComponent implements OnInit {
     });
   }
 
+  // --- Curriculum Actions ---
+
+  addSection() {
+    if (!this.courseId) return;
+    const newSection: Partial<Section> = {
+      courseId: this.courseId,
+      title: 'New Module',
+      order: this.sections.length + 1
+    };
+
+    this.contentService.createSection(newSection).subscribe(section => {
+      this.sections.push({ ...section, lessons: [] });
+    });
+  }
+
+  updateSection(section: Section) {
+    this.contentService.updateSection(section.id, section).subscribe();
+  }
+
+  deleteSection(sectionId: string) {
+    this.contentService.deleteSection(sectionId).subscribe(() => {
+      this.sections = this.sections.filter(s => s.id !== sectionId);
+    });
+  }
+
+  addLesson(section: Section) {
+    if (!this.courseId) return;
+    const newLesson: Partial<Lesson> = {
+      courseId: this.courseId,
+      sectionId: section.id,
+      title: 'New Lesson',
+      description: 'Lesson description',
+      contentType: 'Video',
+      order: section.lessons.length + 1,
+      contentUrl: ''
+    };
+
+    this.contentService.createLesson(newLesson).subscribe(lesson => {
+      section.lessons.push(lesson);
+    });
+  }
+
+  updateLesson(lesson: Lesson) {
+    this.contentService.updateLesson(lesson.id, lesson).subscribe();
+  }
+
+  deleteLesson(section: Section, lessonId: string) {
+    this.contentService.deleteLesson(lessonId).subscribe(() => {
+      section.lessons = section.lessons.filter(l => l.id !== lessonId);
+    });
+  }
+
   onLessonFileUpload(event: any, lesson: Lesson) {
     const file = event.target.files[0];
     if (!file) return;
@@ -172,38 +235,63 @@ export class CourseBuilderComponent implements OnInit {
     });
   }
 
-  addLesson() {
+  // --- Quiz Actions ---
+
+  createQuiz() {
     if (!this.courseId) return;
-    const newLesson: Partial<Lesson> = {
+    this.isCreatingQuiz = true;
+    this.assessmentService.createQuiz({
       courseId: this.courseId,
-      title: 'New Lesson',
-      description: 'Enter lesson description',
-      contentType: 'Video',
-      order: this.lessons.length + 1,
-      contentUrl: ''
+      title: 'Course Final Quiz',
+      description: 'Test your understanding of the course material.',
+      passingScore: 70
+    }).subscribe(quiz => {
+      this.quiz = quiz;
+      this.isCreatingQuiz = false;
+    });
+  }
+
+  addQuestion() {
+    if (!this.quiz) return;
+    const newQuestion = {
+      text: 'New Question',
+      options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
+      correctOptionIndex: 0
     };
 
-    this.contentService.createLesson(newLesson).subscribe(lesson => {
-      this.lessons.push(lesson);
-    });
-  }
-
-  deleteLesson(lessonId: string) {
-    this.contentService.deleteLesson(lessonId).subscribe(() => {
-      this.lessons = this.lessons.filter(l => l.id !== lessonId);
-    });
-  }
-
-  updateLesson(lesson: Lesson) {
-    this.contentService.updateLesson(lesson.id, lesson).subscribe({
-      next: () => {
-        // Optional: show a success toast here
-        console.log('Lesson updated successfully');
-      },
-      error: (err) => {
-        console.error('Failed to update lesson', err);
+    this.assessmentService.addQuestion(this.quiz.id, newQuestion).subscribe(() => {
+      // Re-fetch quiz to get updated questions list
+      if (this.quiz) {
+        this.assessmentService.getQuizById(this.quiz.id).subscribe(updated => {
+          this.quiz = updated;
+        });
       }
     });
+  }
+
+  updateQuestion(question: Question) {
+    this.assessmentService.updateQuestion(question.id, {
+      text: question.text,
+      options: question.options,
+      correctOptionIndex: question.correctOptionIndex
+    }).subscribe();
+  }
+
+  deleteQuestion(questionId: string) {
+    this.assessmentService.deleteQuestion(questionId).subscribe(() => {
+      if (this.quiz) {
+        this.quiz.questions = this.quiz.questions.filter(q => q.id !== questionId);
+      }
+    });
+  }
+
+  updateQuizInfo() {
+    if (!this.quiz) return;
+    this.assessmentService.updateQuiz(this.quiz.id, {
+      title: this.quiz.title,
+      description: this.quiz.description,
+      passingScore: this.quiz.passingScore
+    }).subscribe();
   }
 
   createCategory() {

@@ -1,33 +1,33 @@
-import { Injectable } from '@angular/core';
-import { of, delay } from 'rxjs';
-import { Certificate } from '../models/certificate.models';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
+import { Certificate, IssueCertificateRequest, CertificateVerificationResponse } from '../models/certificate.models';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CertificateService {
-  private mockCertificates: Certificate[] = [
-    {
-      id: 'cert1',
-      courseId: '1',
-      courseName: 'Complete Web Development Bootcamp',
-      studentId: 'current-user',
-      studentName: 'Current User',
-      issueDate: '2025-10-15',
-      certificateUrl: '#'
-    },
-    {
-      id: 'cert2',
-      courseId: '4',
-      courseName: 'UX/UI Design Fundamentals',
-      studentId: 'current-user',
-      studentName: 'Current User',
-      issueDate: '2025-11-20',
-      certificateUrl: '#'
-    }
-  ];
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/certificates`;
 
-  getStudentCertificates() {
-    return of(this.mockCertificates).pipe(delay(500));
+  getMyCertificates(): Observable<Certificate[]> {
+    return this.http.get<Certificate[]>(`${this.apiUrl}/student`);
+  }
+
+  getCertificateById(id: string): Observable<Certificate> {
+    return this.http.get<Certificate>(`${this.apiUrl}/${id}`);
+  }
+
+  issueCertificate(request: IssueCertificateRequest): Observable<Certificate> {
+    return this.http.post<Certificate>(`${this.apiUrl}/issue`, request);
+  }
+
+  downloadCertificate(id: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/download`, { responseType: 'blob' });
+  }
+
+  verifyCertificate(number: string): Observable<CertificateVerificationResponse> {
+    return this.http.get<CertificateVerificationResponse>(`${this.apiUrl}/verify/${number}`);
   }
 }

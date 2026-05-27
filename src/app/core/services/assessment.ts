@@ -1,60 +1,57 @@
-import { Injectable } from '@angular/core';
-import { of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { Quiz, QuizSubmission, QuizResult } from '../models/assessment.models';
+import { Observable, map } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AssessmentService {
-  private mockQuizzes: Quiz[] = [
-    {
-      id: 'q1',
-      courseId: '1',
-      title: 'Web Development Basics Quiz',
-      description: 'Test your knowledge on HTML, CSS, and basic JS.',
-      passingScore: 70,
-      questions: [
-        {
-          id: 'ques1',
-          quizId: 'q1',
-          text: 'What does HTML stand for?',
-          options: ['Hyper Text Markup Language', 'High Tech Modern Language', 'Hyperlink and Text Markup Language', 'Home Tool Markup Language'],
-          correctOptionIndex: 0
-        },
-        {
-          id: 'ques2',
-          quizId: 'q1',
-          text: 'Which property is used to change the background color in CSS?',
-          options: ['color', 'bgcolor', 'background-color', 'fill-color'],
-          correctOptionIndex: 2
-        }
-      ]
-    }
-  ];
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/assessments`;
 
-  getQuizByCourseId(courseId: string) {
-    return of(this.mockQuizzes.find(q => q.courseId === courseId)).pipe(delay(500));
+  getQuizByCourseId(courseId: string): Observable<Quiz | null> {
+    return this.http.get<Quiz[]>(`${this.apiUrl}/course/${courseId}`).pipe(
+      map(quizzes => quizzes.length > 0 ? quizzes[0] : null)
+    );
   }
 
-  submitQuiz(submission: QuizSubmission) {
-    const quiz = this.mockQuizzes.find(q => q.id === submission.quizId);
-    if (!quiz) throw new Error('Quiz not found');
+  getQuizById(id: string): Observable<Quiz> {
+    return this.http.get<Quiz>(`${this.apiUrl}/${id}`);
+  }
 
-    let correctCount = 0;
-    submission.answers.forEach((ans, idx) => {
-      if (ans === quiz.questions[idx].correctOptionIndex) {
-        correctCount++;
-      }
+  createQuiz(data: any): Observable<Quiz> {
+    return this.http.post<Quiz>(this.apiUrl, data);
+  }
+
+  updateQuiz(id: string, data: any): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, data);
+  }
+
+  deleteQuiz(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  addQuestion(quizId: string, data: any): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${quizId}/questions`, data);
+  }
+
+  updateQuestion(questionId: string, data: any): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/questions/${questionId}`, data);
+  }
+
+  deleteQuestion(questionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/questions/${questionId}`);
+  }
+
+  submitQuiz(submission: QuizSubmission): Observable<QuizResult> {
+    return this.http.post<QuizResult>(`${this.apiUrl}/${submission.quizId}/submit`, { 
+      answers: submission.answers 
     });
+  }
 
-    const score = Math.round((correctCount / quiz.questions.length) * 100);
-    const result: QuizResult = {
-      quizId: quiz.id,
-      score,
-      isPassed: score >= quiz.passingScore,
-      correctAnswers: quiz.questions.map(q => q.correctOptionIndex)
-    };
-
-    return of(result).pipe(delay(1000));
+  getMySubmissions(): Observable<QuizResult[]> {
+    return this.http.get<QuizResult[]>(`${this.apiUrl}/my-submissions`);
   }
 }

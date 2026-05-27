@@ -2,51 +2,63 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Lesson, Section } from '../models/content.models';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, Observable, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContentService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/lessons`;
+  private lessonApiUrl = `${environment.apiUrl}/lessons`;
+  private sectionApiUrl = `${environment.apiUrl}/sections`;
 
-  getLessonsByCourseId(courseId: string): Observable<Lesson[]> {
-    return this.http.get<Lesson[]>(`${this.apiUrl}/course/${courseId}`).pipe(
+  // --- Section Operations ---
+
+  getSectionsByCourseId(courseId: string): Observable<Section[]> {
+    return this.http.get<Section[]>(`${this.sectionApiUrl}/course/${courseId}`).pipe(
       catchError(err => {
-        console.error(`Error fetching lessons for course ${courseId}:`, err);
+        console.error(`Error fetching sections for course ${courseId}:`, err);
         return of([]);
       })
     );
   }
 
-  // Helper to group lessons into sections if needed
-  // Since the backend doesn't have sections yet, we group by a naming convention 
-  // or just return them as a single "Course Content" section for now.
-  getSectionsByCourseId(courseId: string): Observable<Section[]> {
-    return this.getLessonsByCourseId(courseId).pipe(
-      map(lessons => {
-        if (lessons.length === 0) return [];
-        
-        // Group by 'Order' range or just put all in one for now
-        // A more advanced logic could group by title prefixes like "Module 1: ..."
-        return [{
-          title: 'Course Content',
-          lessons: lessons.sort((a, b) => a.order - b.order)
-        }];
+  createSection(section: Partial<Section>): Observable<Section> {
+    return this.http.post<Section>(this.sectionApiUrl, section);
+  }
+
+  updateSection(id: string, section: Partial<Section>): Observable<void> {
+    return this.http.put<void>(`${this.sectionApiUrl}/${id}`, section);
+  }
+
+  deleteSection(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.sectionApiUrl}/${id}`);
+  }
+
+  // --- Lesson Operations ---
+
+  getLessonsBySectionId(sectionId: string): Observable<Lesson[]> {
+    return this.http.get<Lesson[]>(`${this.lessonApiUrl}/section/${sectionId}`).pipe(
+      catchError(err => {
+        console.error(`Error fetching lessons for section ${sectionId}:`, err);
+        return of([]);
       })
     );
   }
 
+  getLessonById(id: string): Observable<Lesson> {
+    return this.http.get<Lesson>(`${this.lessonApiUrl}/${id}`);
+  }
+
   createLesson(lesson: Partial<Lesson>): Observable<Lesson> {
-    return this.http.post<Lesson>(this.apiUrl, lesson);
+    return this.http.post<Lesson>(this.lessonApiUrl, lesson);
   }
 
   updateLesson(id: string, lesson: Partial<Lesson>): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${id}`, lesson);
+    return this.http.put<void>(`${this.lessonApiUrl}/${id}`, lesson);
   }
 
   deleteLesson(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.lessonApiUrl}/${id}`);
   }
 }
